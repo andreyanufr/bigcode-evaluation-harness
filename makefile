@@ -8,7 +8,7 @@ else
 endif
 
 build:
-	docker build -f $(DOCKERFILE) -t $(IMAGE_NAME) .
+	docker build -f $(DOCKERFILE) -t $(IMAGE_NAME) --build-arg HTTP_PROXY="$http_proxy" --build-arg HTTPS_PROXY="$https_proxy" .
 
 test:
 	docker run -v $(CURDIR)/tests/docker_test/test_generations.json:/app/test_generations.json:ro \

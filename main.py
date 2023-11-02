@@ -13,6 +13,8 @@ from transformers import (
     HfArgumentParser,
 )
 
+from optimum.intel import OVModelForCausalLM
+
 from bigcode_eval.arguments import EvalArguments
 from bigcode_eval.evaluator import Evaluator
 from bigcode_eval.tasks import ALL_TASKS
@@ -252,7 +254,7 @@ def main():
             print("Loading model in 4bit")
             model_kwargs["load_in_4bit"] = args.load_in_4bit
             model_kwargs["device_map"] = {"": accelerator.process_index}
-        else:
+        elif args.modeltype != 'ov_causal':
             print(f"Loading model in {args.precision}")
             model_kwargs["torch_dtype"] = dict_precisions[args.precision]
 
@@ -268,6 +270,11 @@ def main():
 
         if args.modeltype == "causal":
             model = AutoModelForCausalLM.from_pretrained(
+                args.model,
+                **model_kwargs,
+            )
+        elif args.modeltype == 'ov_causal':
+            model = OVModelForCausalLM.from_pretrained(
                 args.model,
                 **model_kwargs,
             )

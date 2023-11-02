@@ -4,7 +4,7 @@ from math import ceil
 from accelerate.utils import set_seed
 from torch.utils.data.dataloader import DataLoader
 from transformers import StoppingCriteria, StoppingCriteriaList
-
+from optimum.intel import OVModelForCausalLM
 from bigcode_eval.utils import TokenizedDataset, complete_code
 
 
@@ -113,14 +113,16 @@ def parallel_generations(task, dataset, accelerator, model, tokenizer, n_tasks, 
 
     is_loaded_in_8bit = getattr(model, "is_loaded_in_8bit", False)
     is_loaded_in_4bit = getattr(model, "is_loaded_in_4bit", False)
+    is_ov_model = isinstance(model, OVModelForCausalLM)
+
     if args.max_memory_per_gpu is not None:
         # The model is already sharded across multiple GPUs
         ds_loader = accelerator.prepare(ds_loader)
-    elif not is_loaded_in_8bit and not is_loaded_in_4bit:
+    elif not is_loaded_in_8bit and not is_loaded_in_4bit and not is_ov_model:
         # we only wrap data loader to avoid extra memory occupation
         model = model.to(accelerator.device)
         ds_loader = accelerator.prepare(ds_loader)
-    else:
+    elif not is_ov_model:
         # model.to() is not supported for 8bit and 4bit models
         model, ds_loader = accelerator.prepare(model, ds_loader)
 

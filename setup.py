@@ -25,6 +25,8 @@ ds1000_requirements = [
     "tqdm==4.64.1",
     "xgboost==1.6.2",
     "Pillow==9.2.0",
+    "optimum==1.13.2",
+    "optimum-intel==1.12.0.dev0"
 ]
 
 setup(
