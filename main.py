@@ -13,7 +13,10 @@ from transformers import (
     HfArgumentParser,
 )
 
-from optimum.intel import OVModelForCausalLM
+try:
+    from optimum.intel import OVModelForCausalLM
+except ImportError:
+    print("Not import optimum.intel")
 
 from bigcode_eval.arguments import EvalArguments
 from bigcode_eval.evaluator import Evaluator

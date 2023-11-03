@@ -4,7 +4,14 @@ from math import ceil
 from accelerate.utils import set_seed
 from torch.utils.data.dataloader import DataLoader
 from transformers import StoppingCriteria, StoppingCriteriaList
-from optimum.intel import OVModelForCausalLM
+try:
+    from optimum.intel import OVModelForCausalLM
+except ImportError:
+    print("Not import optimum.intel")
+    class OVModelForCausalLM():
+       def __init__(self) -> None:
+           pass
+ 
 from bigcode_eval.utils import TokenizedDataset, complete_code
 
 
