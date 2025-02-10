@@ -68,7 +68,16 @@ class MBPP(Task):
             index of doc in the dataset to which the generation belongs
         """
         prompt = self.get_prompt(self.dataset["test"][idx])
-        generation = generation[len(prompt) :]
+        #special = 'implementing the solution.\n"""\n'
+        special = 'writing the solution.\n"""\n'
+        #special = '#To solve this task'
+        if special in generation:
+            idx = generation.find(special)
+            generation = generation[idx + len(special):]
+        else:
+            idx = generation.find(prompt)
+            generation = generation[idx + len(prompt):]
+            #generation = generation[len(prompt) :]
         return prompt + self._stop_at_stop_token(generation, self.stop_words)
 
     def process_results(self, generations, references):

@@ -14,10 +14,17 @@ from transformers import (
     HfArgumentParser,
 )
 
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"]="2"
+
+from algo import ArmoRMPipeline, BestOfN, DecisionTreeRMPipeline, TransitionsReward, MathPRMPIpeline
+
 from bigcode_eval.arguments import EvalArguments
 from bigcode_eval.evaluator import Evaluator
 from bigcode_eval.tasks import ALL_TASKS
 
+transformers.set_seed(0)
 
 class MultiChoice:
     def __init__(self, choices):
@@ -305,6 +312,15 @@ def main():
                 args.model,
                 **model_kwargs,
             )
+        elif args.modeltype == "ttc":
+            model = AutoModelForCausalLM.from_pretrained(
+                args.model,
+                **model_kwargs,
+            )
+            #rm = ArmoRMPipeline("RLHFlow/ArmoRM-Llama3-8B-v0.1", trust_remote_code=True)
+            rm = DecisionTreeRMPipeline()
+            #rm = TransitionsReward()
+            #rm = MathPRMPIpeline()
         else:
             raise ValueError(
                 f"Non valid modeltype {args.modeltype}, choose from: causal, seq2seq"
@@ -359,6 +375,8 @@ def main():
             tokenizer.bos_token = "<s>"
             tokenizer.bos_token_id = 1
             print("Changing bos_token to <s>")
+        if args.modeltype == "ttc":
+            model = BestOfN(model, tokenizer, rm, iters=10)
 
         evaluator = Evaluator(accelerator, model, tokenizer, args)
 

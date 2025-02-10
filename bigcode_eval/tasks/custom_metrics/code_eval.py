@@ -158,6 +158,7 @@ def compute_code_eval(predictions, references, k=[1, 10, 100], num_workers=4, ti
     for result in results.values():
         result.sort()
         passed = [r[1]["passed"] for r in result]
+        print(result[0][1]['task_id'], passed)
         total.append(len(passed))
         correct.append(sum(passed))
     total = np.array(total)

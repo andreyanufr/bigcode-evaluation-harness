@@ -132,7 +132,12 @@ def parallel_generations(
         ds_loader = accelerator.prepare(ds_loader)
     elif not is_loaded_in_8bit and not is_loaded_in_4bit:
         # we only wrap data loader to avoid extra memory occupation
-        model = model.to(accelerator.device)
+        try:
+            model = model.to(accelerator.device)
+        except:
+            model.model = model.model.to(accelerator.device)
+            #model.reward_model.model = model.reward_model.model.to(accelerator.device)
+            
         ds_loader = accelerator.prepare(ds_loader)
     else:
         # model.to() is not supported for 8bit and 4bit models

@@ -13,6 +13,64 @@ INFILL_MODE = False
 INSTRUCTION_MODE = False
 
 
+# some random words which serves as the splitter
+_MAGIC_SPLITTER_ = "-[[]]-this-is-really-our-highest-priority-[[]]-"
+
+def make_chat_prompt(
+    task_prompt: str,
+    instruction_prefix: str,
+    response_prefix: str,
+    tokenizer,
+    chat_mode=False,
+) -> str:
+
+    # if tokenizer.chat_template is None:
+    # if not chat_mode:
+    #     target = '"""'
+    #     idx = task_prompt.rfind(target)
+    #     if idx != -1:
+    #         task_prompt = task_prompt[:idx] + "Write 4 lines of comments for a complex task or 2 lines for a simple task before implementing the solution.\n"+task_prompt[idx:]
+    #     return task_prompt
+
+    if not chat_mode:
+        target = '"""'
+        idx = task_prompt.rfind(target)
+        if idx != -1:
+            task_prompt = task_prompt[:idx] + "Write 4 lines of comments for a complex task or 2 lines for a simple task before writing the solution.\n"+task_prompt[idx:]
+        return task_prompt
+    
+    # if not chat_mode:
+    #     target = '"""'
+    #     idx = task_prompt.find(target)
+    #     if idx != -1:
+    #         task_prompt = task_prompt[:idx + len(target)] + "Process edge cases in function implementation. Write 2 lines of short comments how are you going to solve following task:"+task_prompt[idx + len(target):] + "\n#To solve this task"
+    #     return task_prompt
+
+    assert instruction_prefix is not None, "Instruction prefix is required!"
+    assert response_prefix is not None, "Response prefix is required!"
+
+    task_prompt = f"""\
+{instruction_prefix}
+```
+{task_prompt.strip()}
+```
+"""
+    response = f"""\
+{response_prefix}
+```python
+{_MAGIC_SPLITTER_}
+```
+"""
+    task_prompt = tokenizer.apply_chat_template(
+        [
+            {"role": "user", "content": task_prompt},
+            {"role": "assistant", "content": response},
+        ],
+        tokenize=False,
+    ).split(_MAGIC_SPLITTER_)[0]
+    return task_prompt
+
+
 class TokenizedDataset(IterableDataset):
     """Tokenize and preprocess the dataset
     Multiple copies of the same prompt are sent sequentially. See compute_code for more details.
@@ -76,6 +134,9 @@ class TokenizedDataset(IterableDataset):
                     )
             else:
                 raise ValueError(f"Unsupported prompt format: {type(prompt_contents)}")
+            instruction_prefix = "Please provide a self-contained Python script that solves the following problem in a markdown code block:"
+            response_prefix = "Below is a Python script with a self-contained function that solves the problem and passes corresponding tests:"
+            #prompt = make_chat_prompt(prompt, instruction_prefix, response_prefix, self.tokenizer, False)
             prompts.append(prompt)
             if self.has_encoder:
                 prompt_encoder = self.task.get_prompt_encoder(self.dataset[sample])
